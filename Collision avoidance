@@ -1,0 +1,65 @@
+import time
+import serial
+
+
+
+usb_port = '/dev/ttyUSB0'
+ser=serial.Serial(usb_port,115200)
+def base_control(speed,radius):
+        cs=0
+        barr=bytearray([170,85,6,1,4])
+        barr+=speed.to_bytes(2,byteorder='little',signed=True)
+
+        barr+=radius.to_bytes(2,byteorder='little',signed=True)
+        for i in range(2,len(barr)-1):
+        
+            cs=cs^barr[i]
+        barr+=cs.to_bytes(1,byteorder='big')
+        print(barr)
+        ser.write(barr)
+
+
+while(1):
+    if(int.from_bytes(ser.read(2),byteorder='little')==333):
+        temp=ser.read(150)
+        in_buff=[x for x in temp]
+        #print(in_buff)
+        if in_buff[3] == 1:
+            left_velocity = 0
+            right_velocity = 250 
+            bot_speed = (left_velocity + right_velocity)/2
+            bot_radius = botradius=(230*(left_velocity+right_velocity))/(2*(right_velocity-left_velocity))
+            print(bot_speed,bot_radius)
+
+            print('Right Bumper Initiated')
+            time.sleep(0.2)
+            base_control(int(bot_speed),int(bot_radius))
+            #barr=bytearray([170,85,6,1,4,-75,0,141,255,58])#header 0,header 1,length,payload(header,length,data),checksum
+            #ser.write(barr)
+            time.sleep(0.2)
+        if in_buff[3] == 2:
+            left_velocity = -100
+            right_velocity = -100
+            bot_speed = (left_velocity + right_velocity)/2
+            bot_radius = 0
+            print('Centre Bumper Initiated')
+            print(bot_speed,bot_radius)
+            base_control(int(bot_speed),int(bot_radius))
+            
+
+            #barr=bytearray([170,85,6,1,4,75,0,141,255,58])#header
+            #barr = bytearray([170, 85, 6, 1, 4, 106, 0, 157])  # Adjust payload values for backward movement
+            #ser.write(barr)
+            time.sleep(0.2)
+        if in_buff[3] == 4:
+            print('Left Bumper Initiated')
+            left_velocity = 250
+            right_velocity = 0
+            bot_speed = (left_velocity + right_velocity)/2
+            bot_radius = botradius=(230*(left_velocity+right_velocity))/(2*(right_velocity-left_velocity))
+            print(bot_speed,bot_radius)
+
+            base_control(int(bot_speed),int(bot_radius))
+            #barr=bytearray([170,85,6,1,4,75,0,141,255,58])#header 0,header 1,length,payload(header,length,data),checksum
+            #ser.write(barr)
+            time.sleep(0.2)
